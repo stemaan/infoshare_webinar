@@ -2,34 +2,33 @@ import json
 import overpy
 import folium
 
-with open('./route.json') as geojson:
+with open('./route.json', encoding='utf-8') as geojson:
     loaded_data = json.load(geojson)
-    coordinates = loaded_data.get('geometry')
-
-coordinates = [coordinate[:2] for coordinate in coordinates]
-middle = coordinates[len(coordinates) // 2]
-my_map = folium.Map(location=(middle), zoom_start=10)
-
-folium.PolyLine(coordinates).add_to(my_map)
+    geometry = loaded_data.get('geometry')
 
 api = overpy.Overpass()
 radius = 1000
 tag = 'fuel'
-latitude = 49.7173
-longitude = 18.8007
-query_fmt = '(node["amenity"="{tag}"](around:{radius},{lat},{lon}););out body;'
+query_template = '(node["amenity"="{tag}"](around:{radius},{lat},{lon}););out body;'
 
-for coordinate in coordinates[::250]:
-    latitude, longitude = coordinate
+# get only latitude and longitude, no need for elevation
+geometry = [(lat, long) for lat, long, alt in geometry]
+middle_idx = len(geometry) // 2
+middle_point = geometry[middle_idx]
+
+my_map = folium.Map(location=middle_point, zoom_start=10)
+
+folium.PolyLine(geometry).add_to(my_map)
+
+for latitude, longitude in geometry[::250]:
     result = api.query(
-        query_fmt.format(
+        query_template.format(
             tag=tag, radius=radius, lat=latitude, lon=longitude
         )
     )
 
     for node in result.nodes:
         folium.map.Marker([node.lat, node.lon],
-                          popup=node.tags.get('brand', 'Stacja paliw')).add_to(
-            my_map)
+                          popup=node.tags.get('brand', tag)).add_to(my_map)
 
-my_map.save('overpass2.html')
+my_map.save('mapa3.html')
