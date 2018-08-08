@@ -2,12 +2,12 @@ import json
 import overpy
 import folium
 
-with open('/home/przemek/PycharmProjects/infoshare_python_krk_3/day_3/data.json') as geojson:
+with open('./route.json') as geojson:
     loaded_data = json.load(geojson)
     coordinates = loaded_data.get('geometry')
 
 coordinates = [coordinate[:2] for coordinate in coordinates]
-middle = coordinates[len(coordinates)//2]
+middle = coordinates[len(coordinates) // 2]
 my_map = folium.Map(location=(middle), zoom_start=10)
 
 folium.PolyLine(coordinates).add_to(my_map)
@@ -28,7 +28,8 @@ for coordinate in coordinates[::250]:
     )
 
     for node in result.nodes:
-        folium.map.Marker([node.lat, node.lon], popup=node.tags.get('brand', 'Stacja paliw')).add_to(my_map)
-
+        folium.map.Marker([node.lat, node.lon],
+                          popup=node.tags.get('brand', 'Stacja paliw')).add_to(
+            my_map)
 
 my_map.save('overpass2.html')
